@@ -2,9 +2,15 @@
 # by Mark Janovitz
 # February 18, 2020
 
-import random
-weapons = ["Sword", "Spell", "Fire"]
-shields = ["Armour", "Magic", "Water"]
+from random import randint, choice
+from enum import Enum
+
+Weapon = Enum("Weapon", "Sword, Spell, Fire")
+Shield = Enum("Shield", "Armour, Magic, Water")
+
+Shield.Armour.blocks = { Weapon.Sword }
+Shield.Magic.blocks = { Weapon.Spell }
+Shield.Water.blocks = { Weapon.Fire }
 
 class Player:
     def __init__(self, name):
@@ -14,16 +20,20 @@ class Player:
         self.shield = 0
     
     def damage(self):
-        points = random.randint(10, 35)
+        points = randint(10, 35)
         self.health -= points
         
     def select_weapon(self):
-        choice = int(input("Choose your weapon 1-Sword, 2-Spell or 3-Fire:  "))
-        self.weapon = choice - 1
+        weapons = [f"{weapon.value}-{weapon.name}" for weapon in Weapon]
+        weapons = ", ".join(weapons[:-1]) + " or " + weapons[-1]
+        choice = int(input(f"Choose your weapon {weapons}:  "))
+        self.weapon = Weapon(choice)
 
     def select_shield(self):
-        choice = int(input("Choose your shield 1-Armour, 2-Magic or 3-Water:  "))
-        self.shield = choice - 1
+        shields = [f"{shield.value}-{shield.name}" for shield in Shield]
+        shields = ", ".join(shields[:-1]) + " or " + shields[-1]
+        choice = int(input(f"Choose your shield {shields}:  "))
+        self.shield = Shield(choice)
         
         
 # Child class of player with override methods for weapon
@@ -33,12 +43,10 @@ class AiPlayer(Player):
         super().__init__(name)
       
     def select_weapon(self):
-        choice = random.randint(1, 3)
-        self.weapon = choice - 1
+        self.weapon = choice(list(Weapon))
         
     def select_shield(self):
-        choice = random.randint(1, 3)
-        self.shield = choice - 1
+        self.shield = choice(list(Shield))
         
 class Game:
     def __init__(self):
@@ -47,7 +55,7 @@ class Game:
         
     def new_round(self):
         self.round += 1
-        print("\n***   Round: %d   ***\n" %(self.round))  
+        print(f"\n***   Round: {self.round}   ***\n")  
         
     # Check if either or both Players is below zero health
     def check_win(self, player, opponent):
@@ -63,26 +71,17 @@ class Game:
             
             
     def display_result(self, player, opponent):
-            print("%s used a %s, %s used a %s Shield\n" %(player.name, weapons[player.weapon], opponent.name, shields[opponent.shield]))
-            print("%s caused damage to %s\n" %(player.name, opponent.name))
+            print(f"{player.name} used a {player.weapon.name}, {opponent.name} used a {opponent.shield.name} Shield\n")
+            print(f"{player.name} caused damage to {opponent.name}\n")
 
     def take_turn(self, player, opponent):
         
-        # Decision Array
-        #
-        #           Armour|  Magic |  Water
-        #           ______|________|_______
-        # Sword:    False |  True  |  True
-        # Spell:    True  |  False |  True   
-        # Fire :    True  |  True  |  False
-        
-        decision_array = [[False, True, True], [True, False, True], [True, True, False]]
-        if decision_array[player.weapon][opponent.shield]:
+        if player.weapon not in opponent.shield.blocks:
             opponent.damage()
-            current_game.displayResult(player, opponent)
+            current_game.display_result(player, opponent)
         else:
-            print("\n%s used a %s, %s used a %s Shield" %(player.name, weapons[player.weapon], opponent.name, shields[opponent.shield]))
-            print("%s blocked %s's attack - No Damage" %(opponent.name, player.name))
+            print(f"\n{player.name} used a {player.weapon.name}, {opponent.name} used a {opponent.shield.name} Shield")
+            print(f"{opponent.name} blocked {player.name}'s attack - No Damage")
 
         
 # Setup Game Objects
@@ -100,6 +99,6 @@ while not current_game.game_over:
     current_game.new_round()
     current_game.take_turn(human, ai)
     current_game.take_turn(ai, human)
-    print("%s's health = %d" %(human.name, human.health))
-    print("%s's health = %d" %(ai.name, ai.health))
+    print(f"{human.name}'s health = {human.health}")
+    print(f"{ai.name}'s health = {ai.health}")
     current_game.check_win(human, ai)

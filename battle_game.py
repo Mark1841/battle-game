@@ -23,17 +23,26 @@ class Player:
         points = randint(10, 35)
         self.health -= points
         
+    def select_equipment(self, equipment):
+        items = [f"{item.value}-{item.name}" for item in equipment]
+        items = ", ".join(items[:-1]) + " or " + items[-1]
+    
+        valid_values = set(item.value for item in equipment)
+    
+        while True:
+            choice = int(input(f"Choose your {equipment.__name__.lower()}: {items}"))
+            if choice in valid_values:
+                break
+
+            print(f"'{choice}' is not a valid selection. Please try again.")
+        
+        return equipment(choice)        
+        
     def select_weapon(self):
-        weapons = [f"{weapon.value}-{weapon.name}" for weapon in Weapon]
-        weapons = ", ".join(weapons[:-1]) + " or " + weapons[-1]
-        choice = int(input(f"Choose your weapon {weapons}:  "))
-        self.weapon = Weapon(choice)
+        self.weapon = self.select_equipment(Weapon)
 
     def select_shield(self):
-        shields = [f"{shield.value}-{shield.name}" for shield in Shield]
-        shields = ", ".join(shields[:-1]) + " or " + shields[-1]
-        choice = int(input(f"Choose your shield {shields}:  "))
-        self.shield = Shield(choice)
+        self.shield = self.select_equipment(Shield)
         
         
 # Child class of player with override methods for weapon
